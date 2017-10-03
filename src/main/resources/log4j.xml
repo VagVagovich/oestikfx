@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+
+<log4j:configuration debug="false"
+	xmlns:log4j="http://jakarta.apache.org/log4j/">
+
+	<appender name="app" class="org.apache.log4j.DailyRollingFileAppender">
+		<param name="File" value="/home/vag/.tmp/oestikfx/log/oestik_fx.log" />
+		<param name="DatePattern" value="'.'yyyy-MM-dd'.log'" />
+		<param name="Encoding" value="UTF-8" />
+		<layout class="org.apache.log4j.EnhancedPatternLayout">
+			<param name="ConversionPattern" value="%d{ISO8601} [%-5p][%-16.16t][%30c{-3}] - %m%n" />
+		</layout>
+	</appender>
+
+	<logger name="org.nic.oestik" additivity="false">
+		<level value="DEBUG" />
+		<appender-ref ref="app" />
+	</logger>
+
+	<logger name="ru" additivity="false">
+		<level value="DEBUG" />
+		<appender-ref ref="app" />
+	</logger>
+
+	<root>
+		<level value="ERROR" />
+		<appender-ref ref="app" />
+	</root>
+
+</log4j:configuration>

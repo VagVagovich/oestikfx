@@ -1,6 +1,17 @@
 package ru.spb.nicetu.oestik;
 
+import java.util.List;
+
+import org.apache.log4j.Logger;
+import org.joda.time.format.DateTimeFormat;
+import org.joda.time.format.DateTimeFormatter;
+import org.nic.oestik.core.model.status.Status;
+import org.nic.oestik.core.model.status.StatusAlert;
+import org.nic.oestik.core.mpi.MPI;
+import org.nic.oestik.core.mpi.listeners.StatusListener;
+
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
 import javafx.geometry.Insets;
@@ -18,16 +29,49 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.HBox;
 import javafx.stage.Stage;
+import javafx.stage.WindowEvent;
+import ru.spb.nicetu.oestik.threads.StatusThread;
 
-public class StatusWindow extends Application {
+/**
+ * Основное окно
+ * @author vag
+ */
+public class StatusWindow extends Application implements StatusListener{
     
     /** Путь до иконки окна */
     private final static String WINDOW_ICON_PATH = "imgs/control.png";
+    /** Логгер */
+    private static final Logger LOG = Logger.getLogger(StatusWindow.class);
     /** Размер отступа */
     private final static int PAD = 5;
     
-    public static void main(String[] args) {
+    /** Поток работы со статусами */
+    private StatusThread statusThread;
+    
+    Label frequencyLabel = new Label("");
+    Label timeLabel = new Label("");
+    Label timeSourceLabel = new Label("");
+    
+    public static void startFx(String[] args) {
         launch(args);
+    }
+    
+    @Override
+    public void onNewStatusAlerts(List<StatusAlert> statusAlerts) {
+      //nothing
+    }
+
+    @Override
+    public void onNewStatus(Status newStatus) {
+        Platform.runLater(new Runnable() {
+            @Override
+            public void run() {
+                frequencyLabel.setText(Double.toString(newStatus.getFrequency()));
+                DateTimeFormatter formatter = DateTimeFormat.forPattern(Status.DATE_FORMAT_TO_VIEW_TEXT);
+                timeLabel.setText(newStatus.getCurrentBcvoTime().toString(formatter));
+                timeSourceLabel.setText(newStatus.getSevSource().getSourceName());
+            }
+        });
     }
     
     @Override
@@ -40,10 +84,31 @@ public class StatusWindow extends Application {
         Scene scene = new Scene(root, 600, 400);
         Image windowImage = new Image(WINDOW_ICON_PATH);
         primaryStage.getIcons().add(windowImage);
-        scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
+//        scene.getStylesheets().add(getClass().getResource("application.css").toExternalForm());
         primaryStage.setTitle("ПК ОЭСТИК Статус");
         primaryStage.setScene(scene);
+        
+        MPI.addStatusListener(this);
+        
         primaryStage.show();
+        
+        primaryStage.setOnCloseRequest(new EventHandler<WindowEvent>() {
+            public void handle(WindowEvent we) {
+                System.out.println("Stage is closing");
+            }
+        });
+    }
+    
+    @Override
+    public void stop(){
+        //Здесь Вы можете прописать все действия при закрытии Вашего приложения.
+        MainThread.stop();
+    }
+    
+    @Override
+    public void init(){
+        //Инициализация любых данных, до включения основного потока Start в работу.
+        //К теме не относится, но тоже полезно!
     }
     
     /**
@@ -134,9 +199,9 @@ public class StatusWindow extends Application {
         Label frequencyTextLabel = new Label("Частота:");
         Label timeTextLabel = new Label("Время:");
         Label timeSourceTextLabel = new Label("Источник точного времени:");
-        Label frequencyLabel = new Label("");
-        Label timeLabel = new Label("");
-        Label timeSourceLabel = new Label("");
+//        Label frequencyLabel = new Label("");
+//        Label timeLabel = new Label("");
+//        Label timeSourceLabel = new Label("");
         
         hbox.getChildren().addAll(frequencyTextLabel, frequencyLabel, timeTextLabel, timeLabel, timeSourceTextLabel, timeSourceLabel);
 
